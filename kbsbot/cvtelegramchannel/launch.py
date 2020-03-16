@@ -9,7 +9,8 @@ import logging
 from functools import wraps
 
 
-API_KEY = os.environ.get("API_KEY")
+
+# API_KEY = os.environ.get("API_KEY")
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -40,8 +41,17 @@ def start(update, context):
     :param context: context of conversation
     """
     user = update.message.from_user.first_name
-    full_response = f"Hola {user} soy . En que te puedo ayudar?"
-    update.message.reply_text(full_response)
+    if user is None:
+        user = update.message.from_user.username
+        full_response = f"Hola {user}. En que te puedo ayudar?\n"
+    else:
+        full_response = f"Hola {user}. En que te puedo ayudar?\n"
+
+    options, response = menu_keyboard()
+    reply_markup = ReplyKeyboardMarkup(options)
+
+    update.message.reply_text(full_response + response, reply_markup=reply_markup, one_time_keyboard=True,
+                              parse_mode=ParseMode.MARKDOWN)
 
 
 @send_typing_action
@@ -55,9 +65,9 @@ def chat(update, context):
     """
     logger.info("[CHAT] %s", update)
 
-    raw_input = update.message.text
     entidades = update.message.parse_entities()
     if len(entidades) > 0:
+        raw_input = update.message.text
         comando_parts = None
         for entity in entidades:
             comando_parts = entity
@@ -65,35 +75,38 @@ def chat(update, context):
         comando = raw_input[comando_parts["offset"] + 1:comando_parts["length"]]
         comando_obj = find_comando(comando)
         logger.info("[COMANDO]: %s", comando_obj)
-
-        if "answer" in comando_obj:
-            update.message.reply_text(comando_obj["answer"])
-        else:
-            if comando_obj["parent"]:
-                options, response = child_menu(comando_obj)
-                reply_markup = ReplyKeyboardMarkup(options)
-                update.message.reply_text(response, reply_markup=reply_markup, one_time_keyboard=True,
-                                          parse_mode=ParseMode.MARKDOWN)
+        if comando_obj is not None:
+            if "answer" in comando_obj:
+                update.message.reply_text(comando_obj["answer"])
             else:
-                user_name = update.message.from_user.username
-                name = update.message.from_user.first_name
-                last_name = update.message.from_user.last_name
-                id_account = update.message.chat_id
+                if comando_obj["parent"]:
+                    options, response = child_menu(comando_obj)
+                    reply_markup = ReplyKeyboardMarkup(options)
+                    update.message.reply_text(response, reply_markup=reply_markup, one_time_keyboard=True,
+                                              parse_mode=ParseMode.MARKDOWN)
+                else:
+                    user_name = update.message.from_user.username
+                    name = update.message.from_user.first_name
+                    last_name = update.message.from_user.last_name
+                    id_account = update.message.chat_id
 
-                data_user = {"user_name": user_name,
-                             "name": name, "last_name": last_name,
-                             "social_network_id": id_account}
-                # Preparing data
-                data = {
-                    "user": data_user,
-                    "comando": comando
-                }
-                logger.info("[CHAT] >>>>> SentData  %s", data)
-                resp = dummy_service(data)
-                logger.info("[CHAT] <<<<< ReceivedData %s", data)
-                for ans in resp["answer"]:
-                    if ans["answer_type"] == "text":
-                        update.message.reply_text(ans["answer"])
+                    data_user = {"user_name": user_name,
+                                 "name": name, "last_name": last_name,
+                                 "social_network_id": id_account}
+                    # Preparing data
+                    data = {
+                        "user": data_user,
+                        "comando": comando
+                    }
+                    logger.info("[CHAT] >>>>> SentData  %s", data)
+                    resp = dummy_service(data)
+                    logger.info("[CHAT] <<<<< ReceivedData %s", data)
+                    for ans in resp["answer"]:
+                        if ans["answer_type"] == "text":
+                            update.message.reply_text(ans["answer"])
+        else:
+            update.message.reply_text("Recuerda usar los comandos provistos")
+
     else:
         update.message.reply_text("Recuerda usar los comandos provistos")
 

@@ -1,6 +1,6 @@
 from telegram import InlineKeyboardButton
 
-opciones = [
+FULL_OPCIONES = [
     # {"comando": "Menu", "parent": True},
     {"comando": "Prevencion", "description": "Lorem", "parent": True,
      "child": ["PrevencionTransporte", "PrevencionHogar", "PrevencionTrabajo"]},
@@ -10,7 +10,7 @@ opciones = [
     {"comando": "CentrosHabilitados", "description": "Lorem", "parent": True, "child": ["CHProvincia", "CHCiudad"]},
     {"comando": "CHProvincia", "description": "Lorem", "parent": False},
     {"comando": "CHCiudad", "description": "Lorem", "parent": False},
-    {"comando": "Sintomas", "description": "Lorem", "parent": False},
+    {"comando": "Sintomas", "description": "Lorem", "parent": True},
     {"comando": "HerramientasTeletrabajo", "description": "Lorem", "parent": True,
      "child": ["HTEducacion", "HTTeletrabajo"]},
     {"comando": "HTEducacion", "description": "Lorem", "parent": False},
@@ -19,15 +19,13 @@ opciones = [
     {"comando": "MediosComunicacion", "description": "Lorem", "parent": False},
     {"comando": "ComoColaborar", "description": "Lorem", "parent": False},
     {"comando": "ReportarCaso", "description": "Lorem", "parent": True},
-    {"comando": "ComoColaborar", "answer": "Puedes colaborar escribiendonos a", "description": "Lorem", "parent": True},
     {"comando": "UltimasNoticias", "description": "Lorem", "parent": False},
-
+    {"comando": "ComoColaborar", "answer": "Puedes colaborar escribiendonos a", "description": "Lorem", "parent": True},
 ]
-
-estado_paciente = [{"comando": "Confirmado"}, {"comando": "No confirmado"}, {"comando": "Desconocido"}]
 
 
 def estado_keyboard():
+    estado_paciente = [{"comando": "Confirmado"}, {"comando": "No confirmado"}, {"comando": "Desconocido"}]
     return prepare_keyboard(estado_paciente, command=False)
 
 
@@ -43,7 +41,7 @@ def prepare_keyboard(options, command=True):
 
 def menu_keyboard():
     parent_options = []
-    for option in opciones:
+    for option in FULL_OPCIONES:
         if option["parent"]:
             parent_options.append(option)
     return prepare_keyboard(parent_options), options_description(parent_options)
@@ -60,14 +58,15 @@ def options_description(local_options):
 
 
 def find_comando(comando):
-    for opcion in opciones:
-        print(opcion)
+    resp = None
+    for opcion in FULL_OPCIONES:
         if opcion["comando"] == comando:
-            return opcion
+            resp = opcion
+    return resp
 
 
 def child_menu(comando):
-    options = []
+    local_options = []
     for child_comand in comando["child"]:
-        options.append(find_comando(child_comand))
-    return prepare_keyboard(options), options_description(options)
+        local_options.append(find_comando(child_comand))
+    return prepare_keyboard(local_options), options_description(local_options)
