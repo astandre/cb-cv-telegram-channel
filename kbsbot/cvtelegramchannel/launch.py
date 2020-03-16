@@ -8,8 +8,8 @@ from telegram import ParseMode
 import logging
 from functools import wraps
 
-API_KEY = "616944972:AAFUU_Od5-fiEg_Oe7pV0g-aWgXuAVM0ctk"
-# API_KEY = os.environ.get("API_KEY")
+
+API_KEY = os.environ.get("API_KEY")
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
