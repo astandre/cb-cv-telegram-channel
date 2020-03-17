@@ -43,6 +43,7 @@ docker build -t covid-bot-ec .
 Ejecutar imagen
 
 ```
-docker run --rm  --name=covid-bot-ec -p 8443:8443 -it covid-bot
+docker run --rm  --name=covid-bot-ec -p 8443:8443 -it covid-bot-ec
 ```
 
+heroku logs --tail --app covid-bot-ec
