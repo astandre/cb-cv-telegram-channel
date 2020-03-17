@@ -11,8 +11,8 @@ jobs:
         - docker images
         - docker tag covid-bot-ec $DOCKER_USERNAME/$HEROKU_APP_NAME
         - docker push $DOCKER_USERNAME/$HEROKU_APP_NAME
-    - stage: Deploy to heroku
-      script:
-        - echo "$HEROKU_PASSWORD" | docker login -u "$HEROKU_USERNAME" --password-stdin registry.heroku.com
-        - docker push registry.heroku.com/$HEROKU_APP_NAME/web;
-        - heroku container:release web --app $HEROKU_APP_NAME
+deploy:
+  provider: heroku
+  api_key: $HEROKU_KEY
+  app: $HEROKU_APP_NAME
+
