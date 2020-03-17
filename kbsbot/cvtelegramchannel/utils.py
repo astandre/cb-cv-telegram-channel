@@ -67,6 +67,9 @@ def find_comando(comando):
 
 def child_menu(comando):
     local_options = []
-    for child_comand in comando["child"]:
-        local_options.append(find_comando(child_comand))
-    return prepare_keyboard(local_options), options_description(local_options)
+    if "child" in comando:
+        for child_comand in comando["child"]:
+            local_options.append(find_comando(child_comand))
+        return prepare_keyboard(local_options), options_description(local_options)
+    else:
+        return None, None

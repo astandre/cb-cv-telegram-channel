@@ -7,10 +7,7 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
 from telegram import ParseMode
 import logging
 from functools import wraps
-
-
-
-# API_KEY = os.environ.get("API_KEY")
+from decouple import config
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -18,7 +15,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-CHAT, HELP, PACIENTE, LUGAR, ENVIAR, ESTADO = range(6)
+CHAT, HELP, LUGAR, ENVIAR, ESTADO = range(5)
 
 
 def send_typing_action(func):
@@ -43,9 +40,11 @@ def start(update, context):
     user = update.message.from_user.first_name
     if user is None:
         user = update.message.from_user.username
-        full_response = f"Hola {user}. En que te puedo ayudar?\n"
+        full_response = f"Hola {user}. En que te puedo ayudar?\n" \
+                        f"Puedes usar el comando /opciones para ver el menu"
     else:
-        full_response = f"Hola {user}. En que te puedo ayudar?\n"
+        full_response = f"Hola {user}. En que te puedo ayudar?\n" \
+                        f"Puedes usar el comando /opciones para ver el menu"
 
     options, response = menu_keyboard()
     reply_markup = ReplyKeyboardMarkup(options)
@@ -66,6 +65,7 @@ def chat(update, context):
     logger.info("[CHAT] %s", update)
 
     entidades = update.message.parse_entities()
+    error_flag = False
     if len(entidades) > 0:
         raw_input = update.message.text
         comando_parts = None
@@ -79,36 +79,42 @@ def chat(update, context):
             if "answer" in comando_obj:
                 update.message.reply_text(comando_obj["answer"])
             else:
+                chat_flag = False
                 if comando_obj["parent"]:
                     options, response = child_menu(comando_obj)
-                    reply_markup = ReplyKeyboardMarkup(options)
-                    update.message.reply_text(response, reply_markup=reply_markup, one_time_keyboard=True,
-                                              parse_mode=ParseMode.MARKDOWN)
+                    if options is not None or response is not None:
+                        reply_markup = ReplyKeyboardMarkup(options)
+                        update.message.reply_text(response, reply_markup=reply_markup, one_time_keyboard=True,
+                                                  parse_mode=ParseMode.MARKDOWN)
+                    else:
+                        chat_flag = True
                 else:
+                    chat_flag = True
+
+                if chat_flag:
                     user_name = update.message.from_user.username
                     name = update.message.from_user.first_name
                     last_name = update.message.from_user.last_name
                     id_account = update.message.chat_id
-
-                    data_user = {"user_name": user_name,
-                                 "name": name, "last_name": last_name,
-                                 "social_network_id": id_account}
                     # Preparing data
-                    data = {
-                        "user": data_user,
-                        "comando": comando
-                    }
+                    data = {"user_name": user_name,
+                            "name": name, "last_name": last_name,
+                            "social_network_id": id_account,
+                            "comando": comando}
+
                     logger.info("[CHAT] >>>>> SentData  %s", data)
                     resp = dummy_service(data)
                     logger.info("[CHAT] <<<<< ReceivedData %s", data)
                     for ans in resp["answer"]:
                         if ans["answer_type"] == "text":
-                            update.message.reply_text(ans["answer"])
+                            update.message.reply_text(ans["answer"], reply_markup=ReplyKeyboardRemove())
         else:
-            update.message.reply_text("Recuerda usar los comandos provistos")
+            error_flag = False
 
     else:
-        update.message.reply_text("Recuerda usar los comandos provistos")
+        error_flag = True
+    if error_flag:
+        update.message.reply_text("Recuerda usar los comandos provistos.\nUsando el comando /opciones")
 
 
 def cancel(bot, update):
@@ -137,20 +143,20 @@ def reporte(update, context):
     context.chat_data["reporte"] = {}
     update.message.reply_text(
         "Recuerda que soy un robot.\n"
-        "Ingresa la informacion del reporte paso a paso.\n"
-        "Cual es el nombre del paciente? \n"
+        "Ingresa la informacion del reporte paso a paso y presiona el boton enviar.\n"
+        "Ingresa el lugar del caso reportado? \n"
         "En caso de no contar con la informacion presiona el boton /omitir")
-    return PACIENTE
-
-
-@send_typing_action
-def paciente(update, context):
-    logger.info("[PACIENTE] %s", update)
-    context.chat_data["reporte"]["nombre"] = update.message.text
-    update.message.reply_text("Ingresa el lugar del caso reportado.\n"
-                              "Puedes usar la opcion de mapas o describir la locacion\n"
-                              "En caso de no contar con la informacion presiona el boton /omitir")
     return LUGAR
+
+
+# @send_typing_action
+# def paciente(update, context):
+#     logger.info("[PACIENTE] %s", update)
+#     context.chat_data["reporte"]["nombre"] = update.message.text
+#     update.message.reply_text("Ingresa el lugar del caso reportado.\n"
+#                               "Puedes usar la opcion de mapas o describir la locacion\n"
+#                               "En caso de no contar con la informacion presiona el boton /omitir")
+#     return LUGAR
 
 
 @send_typing_action
@@ -222,9 +228,44 @@ def main():
     """
     Main method to create the chatbot object
     """
+    pass
+    # API_KEY =
     # Create the EventHandler and pass it your bot's token.
-    updater = Updater(token=API_KEY, use_context=True)
+    # updater =
 
+    # Run the bot until you press Ctrl-C or the process receives SIGINT,
+    # SIGTERM or SIGABRT. This should be used most of the time, since
+    # start_polling() is non-blocking and will stop the bot gracefully.
+
+
+API_KEY = config("API_KEY")
+print(config("DEBUG", default=True, cast=bool))
+
+if config("DEBUG", default=True, cast=bool):
+    def run(updater):
+        logger.info("MODE: DEVELOP")
+        updater.start_polling()
+        updater.idle()
+else:
+    def run(updater):
+        logger.info("MODE: PRODUCTION")
+        # add handlers
+        updater.start_webhook(listen="0.0.0.0",
+                              port=config("PORT", default="8443"),
+                              url_path=API_KEY)
+        updater.bot.set_webhook(config("WEBHOOK_URL") + API_KEY)
+
+    # updater.start_webhook(config("LISTEN"),
+    #                       config("PORT"),
+    #                       config("URL_PATH"),
+    #                       config("KEY"),
+    #                       config("CERT"),
+    #                       config("WEBHOOK_URL"))
+
+if __name__ == '__main__':
+    # Launching App
+    logger.info("Starting bot")
+    updater = Updater(API_KEY, use_context=True)
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
     # updater.dispatcher.add_handler(CallbackQueryHandler(button))
@@ -234,10 +275,11 @@ def main():
             # MessageHandler(Filters.regex(r'^(start|iniciar|comenzar|Start|Iniciar|Comenzar)$'), start),
             # MessageHandler(Filters.regex(r'^(ayuda|Ayuda|menu|Menu)$'), ayuda),
             CommandHandler('ReportarCaso', reporte),
+            CommandHandler('start', start),
             CommandHandler('iniciar', start),
             # CommandHandler('comenzar', start),
             # CommandHandler('ayuda', ayuda),
-            CommandHandler('menu', ayuda),
+            CommandHandler('opciones', ayuda),
             MessageHandler(Filters.regex('.'), chat),
             # RegexHandler('\w', chat),
             # CommandHandler('cursos', chat),
@@ -245,7 +287,7 @@ def main():
 
         states={
             CHAT: [MessageHandler(Filters.text, chat)],
-            PACIENTE: [MessageHandler(Filters.text, paciente)],
+            # PACIENTE: [MessageHandler(Filters.text, paciente)],
             LUGAR: [MessageHandler(Filters.location, lugar_paciente),
                     MessageHandler(Filters.text, lugar_paciente),
                     CommandHandler('omitir', skip_paciente)],
@@ -261,17 +303,5 @@ def main():
 
     # log all errors
     dp.add_error_handler(error)
-
-    # Start the Bot
-    updater.start_polling()
-
-    # Run the bot until you press Ctrl-C or the process receives SIGINT,
-    # SIGTERM or SIGABRT. This should be used most of the time, since
-    # start_polling() is non-blocking and will stop the bot gracefully.
-    updater.idle()
-
-
-if __name__ == '__main__':
-    # Launching App
-    logger.info("Starting bot")
-    main()
+    run(updater)
+    # main()

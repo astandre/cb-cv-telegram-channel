@@ -1,0 +1,18 @@
+language: python
+os: linux
+python: 3.7
+
+jobs:
+  include:
+    - stage: build docker image
+      script:
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - docker build -t $HEROKU_APP_NAME .
+        - docker images
+        - docker tag covid-bot-ec $DOCKER_USERNAME/$HEROKU_APP_NAME
+        - docker push $DOCKER_USERNAME/$HEROKU_APP_NAME
+    - stage: Deploy to heroku
+      script:
+        - echo "$HEROKU_PASSWORD" | docker login -u "$HEROKU_USERNAME" --password-stdin registry.heroku.com
+        - docker push registry.heroku.com/$HEROKU_APP_NAME/web;
+        - heroku container:release web --app $HEROKU_APP_NAME

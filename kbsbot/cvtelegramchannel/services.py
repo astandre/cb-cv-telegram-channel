@@ -1,13 +1,8 @@
 from requests import Session
 import requests
-import os
+from decouple import config
 
-BASE_URL = "http://127.0.0.1:5005"
-# BASE_URL = os.environ.get("BASE_URL")
-
-CONNECTION_KEY = "tokendeseguridad"
-# CONNECTION_KEY = os.environ.get("CONNECTION_KEY")
-
+BASE_URL = config("BASE_URL")
 
 session = Session()
 session.trust_env = False
@@ -24,7 +19,7 @@ def dummy_service(comando):
 def get_greetings():
     url = BASE_URL + "/about/agent"
     try:
-        r = session.get(url, json={"token": CONNECTION_KEY})
+        r = session.get(url, json={})
         if r.status_code == 200:
             response = r.json()
             # print(response)
@@ -35,7 +30,7 @@ def get_greetings():
 
 def chat_with_system(data):
     url = BASE_URL + "/chat"
-    json = {"token": CONNECTION_KEY}
+    json = {}
     json.update(data)
     try:
         r = session.post(url, json=json)
