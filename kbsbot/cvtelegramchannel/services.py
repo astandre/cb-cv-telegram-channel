@@ -2,7 +2,7 @@ from requests import Session
 import requests
 from decouple import config
 
-BASE_URL = config("BASE_URL")
+BASE_URL = config("BASE_URL", default="http://127.0.0.1:5005")
 
 session = Session()
 session.trust_env = False

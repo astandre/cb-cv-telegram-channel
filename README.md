@@ -1,4 +1,6 @@
 # Telegram Channel
+[![Build Status](https://travis-ci.org/astandre/cb-cv-telegram-channel.svg?branch=master)](https://travis-ci.org/astandre/cb-cv-telegram-channel)
+
 Chatbot desarrollado para presentar informacion util acerca de la pandemia del Covid-19 en Ecuador.
 
 
@@ -46,4 +48,11 @@ Ejecutar imagen
 docker run --rm  --name=covid-bot-ec -p 8443:8443 -it covid-bot-ec
 ```
 
+## Despliegue de heroku 
+
+Visualizar logs
+
+```
 heroku logs --tail --app covid-bot-ec
+```
+
