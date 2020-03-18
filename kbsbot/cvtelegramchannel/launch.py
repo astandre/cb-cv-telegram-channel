@@ -15,7 +15,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-CHAT, HELP, LUGAR, ENVIAR, ESTADO, CONFIRMAR = range(6)
+CHAT, HELP, LUGAR, ENVIAR, ESTADO, CONFIRMAR, EDAD = range(7)
 
 
 def send_typing_action(func):
@@ -40,12 +40,10 @@ def start(update, context):
     user = update.message.from_user.first_name
     if user is None:
         user = update.message.from_user.username
-        full_response = f"Hola {user}. En que te puedo ayudar?\n" \
-                        f"Puedes usar el comando /opciones para ver el menu"
-    else:
-        full_response = f"Hola {user}. En que te puedo ayudar?\n" \
-                        f"Puedes usar el comando /opciones para ver el menu"
 
+    full_response = f"""
+    !Hola! {user}, soy (NOMBREPENDIENTE) un asistente con la finalidad de entregarte informacion oportuna de la epidemia mundial del covid-19 en el Ecuador.\nPuedo resolver tus dudas de la siguiente manera (/opciones):
+           """
     options, response = menu_keyboard()
 
     update.message.reply_text(full_response + response, reply_markup=options, one_time_keyboard=True,
@@ -130,8 +128,11 @@ def ayuda(update, context):
     """
     logger.info("[HELP] %s", update)
     options, response = menu_keyboard()
-    update.message.reply_text("hola ayuda\n" + response, reply_markup=options, one_time_keyboard=True,
-                              parse_mode=ParseMode.MARKDOWN)
+    update.message.reply_text(
+        "Soy un asistente con la finalidad de entregarte informacion oportuna de la epidemia mundial del covid-19 en el Ecuador.\n"
+        "Puedo resolver tus dudas de la siguiente manera\n" + response,
+        reply_markup=options, one_time_keyboard=True,
+        parse_mode=ParseMode.MARKDOWN)
 
 
 @send_typing_action
@@ -200,15 +201,26 @@ def estado(update, context):
     else:
         context.chat_data["reporte"]["estado"] = update.message.text
 
+    update.message.reply_text("Cual es la edad del paciente?", parse_mode=ParseMode.MARKDOWN)
+    return EDAD
+
+
+@send_typing_action
+def edad(update, context):
+    logger.info("[EDAD] %s", update)
+    context.chat_data["reporte"]["edad"] = update.message.text
+
     lugar = context.chat_data['reporte']['lugar']
     local_estado = context.chat_data['reporte']['estado']
+    local_edad = context.chat_data['reporte']['edad']
     if isinstance(local_estado, dict):
         local_estado = "Mapa"
 
     response = f"Esta es la informacion brindad:\n" \
                f"LUGAR = {lugar}\n" \
                f"ESTADO = {local_estado}\n" \
-               f"Deseas confirmar?:\n"
+               f"EDAD = {local_edad}\n" \
+               f"Deseas confirmar?.\nSelecciona no si quieres corregir los datos"
     update.message.reply_text(response, reply_markup=si_no_keyboard(), one_time_keyboard=True,
                               parse_mode=ParseMode.MARKDOWN)
 
@@ -217,7 +229,7 @@ def estado(update, context):
 
 @send_typing_action
 def confirmar_reporte(update, context):
-    logger.info("[ESTADO] %s", update)
+    logger.info("[CONFIRMAR] %s", update)
     if update.message.text.lower() == "si":
         return ENVIAR
     else:
@@ -241,20 +253,6 @@ def error(update, context):
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, context.error)
     update.message.reply_text("Ha ocurrido un error inesperado. Vuelva a Intentarlo")
-
-
-def main():
-    """
-    Main method to create the chatbot object
-    """
-    pass
-    # API_KEY =
-    # Create the EventHandler and pass it your bot's token.
-    # updater =
-
-    # Run the bot until you press Ctrl-C or the process receives SIGINT,
-    # SIGTERM or SIGABRT. This should be used most of the time, since
-    # start_polling() is non-blocking and will stop the bot gracefully.
 
 
 API_KEY = config("API_KEY")
@@ -298,6 +296,7 @@ if __name__ == '__main__':
             # CommandHandler('comenzar', start),
             # CommandHandler('ayuda', ayuda),
             CommandHandler('opciones', ayuda),
+            CommandHandler('menu', ayuda),
             MessageHandler(Filters.regex('.'), chat),
             # RegexHandler('\w', chat),
             # CommandHandler('cursos', chat),
@@ -311,6 +310,7 @@ if __name__ == '__main__':
                     CommandHandler('omitir', skip_paciente)],
             ESTADO: [MessageHandler(Filters.text, estado),
                      CommandHandler('omitir', skip_lugar)],
+            EDAD: [MessageHandler(Filters.text, edad)],
             CONFIRMAR: [MessageHandler(Filters.text, confirmar_reporte)],
             ENVIAR: [MessageHandler(Filters.text, enviar_reporte)],
         },
