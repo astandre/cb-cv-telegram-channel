@@ -1,7 +1,7 @@
 from kbsbot.cvtelegramchannel.services import *
 from kbsbot.cvtelegramchannel.utils import *
 from telegram import (ChatAction)
-from telegram import (ReplyKeyboardRemove, ReplyKeyboardMarkup)
+from telegram import (ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
                           ConversationHandler)
 from telegram import ParseMode
@@ -15,7 +15,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-CHAT, HELP, LUGAR, ENVIAR, ESTADO = range(5)
+CHAT, HELP, LUGAR, ENVIAR, ESTADO, CONFIRMAR = range(6)
 
 
 def send_typing_action(func):
@@ -47,9 +47,8 @@ def start(update, context):
                         f"Puedes usar el comando /opciones para ver el menu"
 
     options, response = menu_keyboard()
-    reply_markup = ReplyKeyboardMarkup(options)
 
-    update.message.reply_text(full_response + response, reply_markup=reply_markup, one_time_keyboard=True,
+    update.message.reply_text(full_response + response, reply_markup=options, one_time_keyboard=True,
                               parse_mode=ParseMode.MARKDOWN)
 
 
@@ -83,8 +82,7 @@ def chat(update, context):
                 if comando_obj["parent"]:
                     options, response = child_menu(comando_obj)
                     if options is not None or response is not None:
-                        reply_markup = ReplyKeyboardMarkup(options)
-                        update.message.reply_text(response, reply_markup=reply_markup, one_time_keyboard=True,
+                        update.message.reply_text(response, reply_markup=options, one_time_keyboard=True,
                                                   parse_mode=ParseMode.MARKDOWN)
                     else:
                         chat_flag = True
@@ -132,8 +130,7 @@ def ayuda(update, context):
     """
     logger.info("[HELP] %s", update)
     options, response = menu_keyboard()
-    reply_markup = ReplyKeyboardMarkup(options)
-    update.message.reply_text("hola ayuda\n" + response, reply_markup=reply_markup, one_time_keyboard=True,
+    update.message.reply_text("hola ayuda\n" + response, reply_markup=options, one_time_keyboard=True,
                               parse_mode=ParseMode.MARKDOWN)
 
 
@@ -170,9 +167,8 @@ def skip_paciente(update, context):
 
 @send_typing_action
 def skip_lugar(update, context):
-    reply_markup = ReplyKeyboardMarkup(estado_keyboard())
     context.chat_data["reporte"]["lugar"] = "Desconocido"
-    update.message.reply_text("Cual es estado del paciente?.\n", reply_markup=reply_markup, one_time_keyboard=True,
+    update.message.reply_text("Cual es estado del paciente?.\n", reply_markup=estado_keyboard(), one_time_keyboard=True,
                               parse_mode=ParseMode.MARKDOWN)
     return ESTADO
 
@@ -191,8 +187,7 @@ def lugar_paciente(update, context):
     else:
         context.chat_data["reporte"]["lugar"] = update.message.location
 
-    reply_markup = ReplyKeyboardMarkup(estado_keyboard())
-    update.message.reply_text("Cual es estado del paciente?.\n", reply_markup=reply_markup, one_time_keyboard=True,
+    update.message.reply_text("Cual es estado del paciente?.", reply_markup=estado_keyboard(), one_time_keyboard=True,
                               parse_mode=ParseMode.MARKDOWN)
     return ESTADO
 
@@ -204,7 +199,31 @@ def estado(update, context):
         context.chat_data["reporte"]["estado"] = "Desconocido"
     else:
         context.chat_data["reporte"]["estado"] = update.message.text
-    return ENVIAR
+
+    lugar = context.chat_data['reporte']['lugar']
+    local_estado = context.chat_data['reporte']['estado']
+    if isinstance(local_estado, dict):
+        local_estado = "Mapa"
+
+    response = f"Esta es la informacion brindad:\n" \
+               f"LUGAR = {lugar}\n" \
+               f"ESTADO = {local_estado}\n" \
+               f"Deseas confirmar?:\n"
+    update.message.reply_text(response, reply_markup=si_no_keyboard(), one_time_keyboard=True,
+                              parse_mode=ParseMode.MARKDOWN)
+
+    return CONFIRMAR
+
+
+@send_typing_action
+def confirmar_reporte(update, context):
+    logger.info("[ESTADO] %s", update)
+    if update.message.text.lower() == "si":
+        return ENVIAR
+    else:
+        update.message.reply_text("Vuelve a intentarlo para corregir la informacion",
+                                  reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
 
 
 @send_typing_action
@@ -239,7 +258,6 @@ def main():
 
 
 API_KEY = config("API_KEY")
-print(config("DEBUG", default=True, cast=bool))
 
 if config("DEBUG", default=True, cast=bool):
     def run(updater):
@@ -293,6 +311,7 @@ if __name__ == '__main__':
                     CommandHandler('omitir', skip_paciente)],
             ESTADO: [MessageHandler(Filters.text, estado),
                      CommandHandler('omitir', skip_lugar)],
+            CONFIRMAR: [MessageHandler(Filters.text, confirmar_reporte)],
             ENVIAR: [MessageHandler(Filters.text, enviar_reporte)],
         },
 

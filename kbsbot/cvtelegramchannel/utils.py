@@ -1,31 +1,35 @@
-from telegram import InlineKeyboardButton
+from telegram import InlineKeyboardButton, ReplyKeyboardMarkup
 
 FULL_OPCIONES = [
     # {"comando": "Menu", "parent": True},
     {"comando": "Prevencion", "description": "Lorem", "parent": True,
-     "child": ["PrevencionTransporte", "PrevencionHogar", "PrevencionTrabajo"]},
-    {"comando": "PrevencionTransporte", "description": "Lorem", "parent": False},
-    {"comando": "PrevencionHogar", "description": "Lorem", "parent": False},
-    {"comando": "PrevencionTrabajo", "description": "Lorem", "parent": False},
-    {"comando": "CentrosHabilitados", "description": "Lorem", "parent": True, "child": ["CHProvincia", "CHCiudad"]},
-    {"comando": "CHProvincia", "description": "Lorem", "parent": False},
-    {"comando": "CHCiudad", "description": "Lorem", "parent": False},
+     "child": ["Transporte", "Hogar", "Trabajo"]},
+    {"comando": "Transporte", "description": "Lorem", "parent": False},
+    {"comando": "Hogar", "description": "Lorem", "parent": False},
+    {"comando": "Trabajo", "description": "Lorem", "parent": False},
+    {"comando": "CentrosHabilitados", "description": "Lorem", "parent": True, "child": ["PorProvincia", "PorCiudad"]},
+    {"comando": "PorProvincia", "description": "Lorem", "parent": False},
+    {"comando": "PorCiudad", "description": "Lorem", "parent": False},
     {"comando": "Sintomas", "description": "Lorem", "parent": True},
     {"comando": "HerramientasTeletrabajo", "description": "Lorem", "parent": True,
-     "child": ["HTEducacion", "HTTeletrabajo"]},
-    {"comando": "HTEducacion", "description": "Lorem", "parent": False},
-    {"comando": "HTTeletrabajo", "description": "Lorem", "parent": False},
+     "child": ["Educacion", "Teletrabajo"]},
+    {"comando": "Educacion", "description": "Lorem", "parent": False},
+    {"comando": "Teletrabajo", "description": "Lorem", "parent": False},
     {"comando": "EstadoCuarentena", "description": "Lorem", "parent": False},
     {"comando": "MediosComunicacion", "description": "Lorem", "parent": False},
-    {"comando": "ComoColaborar", "description": "Lorem", "parent": False},
-    {"comando": "ReportarCaso", "description": "Lorem", "parent": True},
     {"comando": "UltimasNoticias", "description": "Lorem", "parent": False},
+    {"comando": "ReportarCaso", "description": "Lorem", "parent": True},
     {"comando": "ComoColaborar", "answer": "Puedes colaborar escribiendonos a", "description": "Lorem", "parent": True},
 ]
 
 
 def estado_keyboard():
-    estado_paciente = [{"comando": "Confirmado"}, {"comando": "No confirmado"}, {"comando": "Desconocido"}]
+    estado_paciente = [{"comando": "En cuarentena domiciliar"}, {"comando": "Internado"}, {"comando": "Desconocido"}]
+    return prepare_keyboard(estado_paciente, command=False)
+
+
+def si_no_keyboard():
+    estado_paciente = [{"comando": "Si"}, {"comando": "No"}]
     return prepare_keyboard(estado_paciente, command=False)
 
 
@@ -36,7 +40,7 @@ def prepare_keyboard(options, command=True):
             keyboard.append([InlineKeyboardButton("/" + option["comando"])])
         else:
             keyboard.append([InlineKeyboardButton(option["comando"])])
-    return keyboard
+    return ReplyKeyboardMarkup(keyboard)
 
 
 def menu_keyboard():
@@ -58,11 +62,9 @@ def options_description(local_options):
 
 
 def find_comando(comando):
-    resp = None
     for opcion in FULL_OPCIONES:
         if opcion["comando"] == comando:
-            resp = opcion
-    return resp
+            return opcion
 
 
 def child_menu(comando):

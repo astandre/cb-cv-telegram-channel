@@ -11,10 +11,10 @@ jobs:
         - docker images
         - docker tag covid-bot-ec $DOCKER_USERNAME/$HEROKU_APP_NAME
         - docker push $DOCKER_USERNAME/$HEROKU_APP_NAME
-deploy:
-  provider: heroku
-  api_key: $HEROKU_KEY
-  app: $HEROKU_APP_NAME
-  run:
-    - "python kbsbot/cvtelegramchannel/launch.py"
+#deploy:
+#  provider: heroku
+#  api_key: $HEROKU_KEY
+#  app: $HEROKU_APP_NAME
+#  run:
+#    - "python kbsbot/cvtelegramchannel/launch.py"
 
