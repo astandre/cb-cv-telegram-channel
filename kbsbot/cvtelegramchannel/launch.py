@@ -91,12 +91,12 @@ def chat(update, context):
                     user_name = update.message.from_user.username
                     name = update.message.from_user.first_name
                     last_name = update.message.from_user.last_name
-                    id_account = str(update.message.chat_id)
+                    id_account = update.message.chat_id
                     # Preparing data
-                    data = {"user_name": user_name,
-                            "name": name, "last_name": last_name,
-                            "social_network_id": id_account,
-                            "command": comando.lower()}
+                    data = {"user_name": str(user_name),
+                            "name": str(name), "last_name": str(last_name),
+                            "social_network_id": str(id_account),
+                            "command": str(comando.lower())}
 
                     logger.info("[CHAT] >>>>> SentData  %s", data)
                     resp = post_command(data)
