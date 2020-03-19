@@ -22,7 +22,7 @@ FULL_OPCIONES = [
     {"comando": "MediosComunicacion", "description": "Medios oficiales para informarte", "parent": False},
     {"comando": "UltimasNoticias", "description": "Qué pasa con el covid-19 a nivel mundial", "parent": False},
     {"comando": "ReportarCaso", "description": "Cónoces algún caso? Reportalo", "parent": True},
-    {"comando": "ComoColaborar", "answer": "Puedes colaborar escribiendonos a (INFORMACION PENDIENTE)",
+    {"comando": "ComoColaborar", "answer": "Puedes colaborar escribiendonos al 0987368191",
      "description": "Contacta con nostros!", "parent": True},
 ]
 

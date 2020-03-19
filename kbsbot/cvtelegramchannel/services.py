@@ -1,14 +1,9 @@
-from requests import Session
 import requests
 from decouple import config
 
 BASE_URL = config("BASE_URL", default="http://127.0.0.1:5005")
 
-session = Session()
-session.trust_env = False
-session.verify = False
-session.headers["Accept"] = "application/json"
-session.headers["Content-Type"] = "application/json"
+headers = {'content-type': 'application-json'}
 
 
 def dummy_service(comando):
@@ -16,16 +11,20 @@ def dummy_service(comando):
     return {"answer": [{"answer_type": "text", "answer": "esta es la respuesta"}]}
 
 
-def get_greetings():
-    url = BASE_URL + "/about/agent"
+def post_command(data):
+    url = BASE_URL + "/command/"
     try:
-        r = session.get(url, json={})
+        r = requests.post(url, json=data)
+        print(r)
         if r.status_code == 200:
             response = r.json()
-            # print(response)
+            print(response)
             return response
+        else:
+            return {"description": "Ha ocurrido un error inesperado", "answer": []}
     except requests.exceptions.RequestException as e:
         print(e)
+        return {"description": "Ha ocurrido un error inesperado", "answer": []}
 
 
 def chat_with_system(data):
@@ -33,11 +32,9 @@ def chat_with_system(data):
     json = {}
     json.update(data)
     try:
-        r = session.post(url, json=json)
-        # print(">>>>> SentData ", url, json)
+        r = requests.post(url, json=json)
         if r.status_code == 200:
             response = r.json()
-            # print("<<<<< ReceivedData ", response)
             return response
     except requests.exceptions.RequestException as e:
         print(e)

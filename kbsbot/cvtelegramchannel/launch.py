@@ -91,16 +91,18 @@ def chat(update, context):
                     user_name = update.message.from_user.username
                     name = update.message.from_user.first_name
                     last_name = update.message.from_user.last_name
-                    id_account = update.message.chat_id
+                    id_account = str(update.message.chat_id)
                     # Preparing data
                     data = {"user_name": user_name,
                             "name": name, "last_name": last_name,
                             "social_network_id": id_account,
-                            "comando": comando}
+                            "command": comando.lower()}
 
                     logger.info("[CHAT] >>>>> SentData  %s", data)
-                    resp = dummy_service(data)
-                    logger.info("[CHAT] <<<<< ReceivedData %s", data)
+                    resp = post_command(data)
+                    logger.info("[CHAT] <<<<< ReceivedData %s", resp)
+                    if "description" in resp:
+                        update.message.reply_text(resp["description"], reply_markup=ReplyKeyboardRemove())
                     for ans in resp["answer"]:
                         if ans["answer_type"] == "text":
                             update.message.reply_text(ans["answer"], reply_markup=ReplyKeyboardRemove())
@@ -128,11 +130,11 @@ def ayuda(update, context):
     """
     logger.info("[HELP] %s", update)
     options, response = menu_keyboard()
-    update.message.reply_text(
-        "Soy un asistente con la finalidad de entregarte informacion oportuna de la epidemia mundial del covid-19 en el Ecuador.\n"
-        "Puedo resolver tus dudas de la siguiente manera\n" + response,
-        reply_markup=options, one_time_keyboard=True,
-        parse_mode=ParseMode.MARKDOWN)
+    resp = f"""Soy un asistente con la finalidad de entregarte informacion oportuna de la epidemia mundial del covid-19 en el Ecuador.\n
+Puedo resolver tus dudas de la siguiente manera.\n {response} """
+    update.message.reply_text(resp,
+                              reply_markup=options, one_time_keyboard=True,
+                              parse_mode=ParseMode.MARKDOWN)
 
 
 @send_typing_action
@@ -142,7 +144,7 @@ def reporte(update, context):
     update.message.reply_text(
         "Recuerda que soy un robot.\n"
         "Ingresa la informacion del reporte paso a paso y presiona el boton enviar.\n"
-        "Ingresa el lugar del caso reportado? \n"
+        "De que lugar es el caso reportado? \n"
         "En caso de no contar con la informacion presiona el boton /omitir")
     return LUGAR
 
@@ -201,7 +203,8 @@ def estado(update, context):
     else:
         context.chat_data["reporte"]["estado"] = update.message.text
 
-    update.message.reply_text("Cual es la edad del paciente?", parse_mode=ParseMode.MARKDOWN)
+    update.message.reply_text("Cual es la edad del paciente?", parse_mode=ParseMode.MARKDOWN,
+                              reply_markup=ReplyKeyboardRemove())
     return EDAD
 
 
