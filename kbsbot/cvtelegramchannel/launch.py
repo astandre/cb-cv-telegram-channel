@@ -77,7 +77,7 @@ def chat(update, context):
                 update.message.reply_text(comando_obj["answer"])
             else:
                 chat_flag = False
-                if comando_obj["parent"]:
+                if "child" in comando_obj:
                     options, response = child_menu(comando_obj)
                     if options is not None or response is not None:
                         update.message.reply_text(response, reply_markup=options, one_time_keyboard=True,
