@@ -214,12 +214,12 @@ def estado(update, context):
 def edad(update, context):
     logger.info("[EDAD] %s", update)
     context.chat_data["reporte"]["edad"] = update.message.text
-
-    lugar = context.chat_data['reporte']['lugarDiagnostico']
     local_estado = context.chat_data['reporte']['estadoPaciente']
     local_edad = context.chat_data['reporte']['edad']
-    if isinstance(local_estado, dict):
-        local_estado = "Mapa"
+    if "longitud" in context.chat_data['reporte'] or "latitud" in context.chat_data['reporte']:
+        lugar = "Mapa"
+    else:
+        lugar = context.chat_data['reporte']['lugarDiagnostico']
 
     response = f"Esta es la informacion brindad:\n" \
                f"LUGAR = {lugar}\n" \
