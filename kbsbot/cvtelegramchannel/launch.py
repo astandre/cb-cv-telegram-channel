@@ -170,7 +170,7 @@ def skip_paciente(update, context):
 
 @send_typing_action
 def skip_lugar(update, context):
-    context.chat_data["reporte"]["lugar"] = "Desconocido"
+    context.chat_data["reporte"]["lugarDiagnostico"] = "Desconocido"
     update.message.reply_text("Cual es estado del paciente?.\n", reply_markup=estado_keyboard(), one_time_keyboard=True,
                               parse_mode=ParseMode.MARKDOWN)
     return ESTADO
@@ -184,11 +184,13 @@ def lugar_paciente(update, context):
 
     if text_location is not None:
         if text_location == "/omitir":
-            context.chat_data["reporte"]["lugar"] = "Desconocido"
+            context.chat_data["reporte"]["lugarDiagnostico"] = "Desconocido"
         else:
-            context.chat_data["reporte"]["lugar"] = text_location
+            context.chat_data["reporte"]["lugarDiagnostico"] = text_location
     else:
-        context.chat_data["reporte"]["lugar"] = update.message.location
+        print(update.message.location)
+        context.chat_data["reporte"]["latitud"] = update.message.location["latitud"]
+        context.chat_data["reporte"]["latitud"] = update.message.location["longitud"]
 
     update.message.reply_text("Cual es estado del paciente?.", reply_markup=estado_keyboard(), one_time_keyboard=True,
                               parse_mode=ParseMode.MARKDOWN)
@@ -199,9 +201,9 @@ def lugar_paciente(update, context):
 def estado(update, context):
     logger.info("[ESTADO] %s", update)
     if update.message.text == "/omitir":
-        context.chat_data["reporte"]["estado"] = "Desconocido"
+        context.chat_data["reporte"]["estadoPaciente"] = "Desconocido"
     else:
-        context.chat_data["reporte"]["estado"] = update.message.text
+        context.chat_data["reporte"]["estadoPaciente"] = update.message.text
 
     update.message.reply_text("Cual es la edad del paciente?", parse_mode=ParseMode.MARKDOWN,
                               reply_markup=ReplyKeyboardRemove())
@@ -213,8 +215,8 @@ def edad(update, context):
     logger.info("[EDAD] %s", update)
     context.chat_data["reporte"]["edad"] = update.message.text
 
-    lugar = context.chat_data['reporte']['lugar']
-    local_estado = context.chat_data['reporte']['estado']
+    lugar = context.chat_data['reporte']['lugarDiagnostico']
+    local_estado = context.chat_data['reporte']['estadoPaciente']
     local_edad = context.chat_data['reporte']['edad']
     if isinstance(local_estado, dict):
         local_estado = "Mapa"
@@ -245,7 +247,7 @@ def confirmar_reporte(update, context):
 def enviar_reporte(update, context):
     data = context.chat_data["reporte"]
     logger.info("[REPORTE] >>>>> SentData  %s", data)
-    dummy_service(context.chat_data["reporte"])
+    post_caso(context.chat_data["reporte"])
     update.message.reply_text("Gracias por la informacion.\n"
                               "Se ha enviado tu reporte",
                               reply_markup=ReplyKeyboardRemove())

@@ -27,14 +27,17 @@ def post_command(data):
         return {"description": "Ha ocurrido un error inesperado", "answer": []}
 
 
-def chat_with_system(data):
-    url = BASE_URL + "/chat"
-    json = {}
-    json.update(data)
+API_URL = config("API_URL", default="http://127.0.0.1:5005")
+
+
+def post_caso(data):
+    url = API_URL + "/api/v1/casos"
     try:
-        r = requests.post(url, json=json)
+        r = requests.post(url, json=data)
         if r.status_code == 200:
-            response = r.json()
-            return response
+            # response = r.json()
+            return True
     except requests.exceptions.RequestException as e:
-        print(e)
+        return False
+
+
