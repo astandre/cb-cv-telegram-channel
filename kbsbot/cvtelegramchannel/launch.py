@@ -188,9 +188,9 @@ def lugar_paciente(update, context):
         else:
             context.chat_data["reporte"]["lugarDiagnostico"] = text_location
     else:
-        print(update.message.location)
-        context.chat_data["reporte"]["latitud"] = update.message.location["latitud"]
-        context.chat_data["reporte"]["latitud"] = update.message.location["longitud"]
+        # print(update.message.location)
+        context.chat_data["reporte"]["longitud"] = update.message.location["longitude"]
+        context.chat_data["reporte"]["latitud"] = update.message.location["latitude"]
 
     update.message.reply_text("Cual es estado del paciente?.", reply_markup=estado_keyboard(), one_time_keyboard=True,
                               parse_mode=ParseMode.MARKDOWN)
